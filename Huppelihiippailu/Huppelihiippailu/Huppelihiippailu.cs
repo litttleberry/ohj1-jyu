@@ -21,12 +21,35 @@ public class Huppelihiippailu : PhysicsGame
     const double RUUDUN_LEVEYS = 60;
     const double RUUDUN_KORKEUS = 60;
 
+    // int krapulamittari = 5;
+
+    IntMeter krapulamittari;
+
 
     public override void Begin()
     {
         LuoKentta();
+        LuoKrapulamittari();
+
     }
 
+    public void LuoKrapulamittari()
+    {
+        krapulamittari = new IntMeter(60);
+
+        // krapulamittari laskemaan tasaisesti ajan kuluessa
+
+        Label pisteNaytto = new Label();
+        pisteNaytto.X = Screen.Left + 20;
+        pisteNaytto.Y = Screen.Top - 20;
+        pisteNaytto.TextColor = Color.Black;
+        pisteNaytto.Color = Color.White;
+        pisteNaytto.Title = "Hilpeystilanne";
+
+        pisteNaytto.BindTo(krapulamittari);
+        Add(pisteNaytto);
+
+    }
 
     public void LuoKentta()
     {
@@ -57,6 +80,7 @@ public class Huppelihiippailu : PhysicsGame
         snack.Position = paikka;
         snack.Shape = Shape.Diamond;
         snack.Color = Color.Orange;
+        snack.Tag = "snack";
         Add(snack);
     }
 
@@ -67,6 +91,7 @@ public class Huppelihiippailu : PhysicsGame
         este.Position = paikka;
         este.Shape = Shape.Hexagon;
         este.Color = Color.Navy;
+        este.Tag = "este";
         Add(este);
     }
 
@@ -94,6 +119,7 @@ public class Huppelihiippailu : PhysicsGame
         talo.Position = paikka;
         talo.Shape = Shape.Rectangle;
         talo.Color = vari;
+        talo.Tag = "rakennus";
         Add(talo);
     }
 
@@ -110,11 +136,31 @@ public class Huppelihiippailu : PhysicsGame
         ukkeli.Position = paikka;
         ukkeli.Shape = Shape.Circle;
         ukkeli.Color = Color.BloodRed;
+        ukkeli.Tag = "ukkeli";
         Add(ukkeli);
 
         AsetaOhjaimet();
+        AddCollisionHandler(ukkeli, "este", PelaajaOsuuEsteeseen);
+        AddCollisionHandler(ukkeli, "snack", PelaajaKeraaHerkun);
     }
 
+
+    public void PelaajaOsuuEsteeseen(PhysicsObject ukkeli, PhysicsObject kohde)
+    {
+        krapulamittari.Value--;
+        
+        if (krapulamittari <= 0)
+        {
+            MessageDisplay.Add("Hävisit pelin.");
+        }
+
+    }
+
+    public void PelaajaKeraaHerkun(PhysicsObject ukkeli, PhysicsObject kohde)
+    {
+        krapulamittari.Value++;
+        kohde.Destroy();
+    }
 
     /// <summary>
     /// Pelattavan hahmon ja yleiset ohjainkäskyt, pelistä poistuminen.
