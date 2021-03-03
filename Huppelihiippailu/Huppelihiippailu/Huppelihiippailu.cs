@@ -5,11 +5,23 @@ using Jypeli.Widgets;
 using System;
 using System.Collections.Generic;
 
-// HUOM:
-// Tämä projekti käyttää hyvin kokeellista FarseerPhysics -fysiikkamoottoria
-// Varmista että projektin paketit ovat aina uusimmassa versiossa.
-// Katso myös https://tim.jyu.fi/view/kurssit/jypeli/farseer
-// kaikista tämän version eroavaisuuksista sekä tunnetuista ongelmista. Täydennä listaa tarvittaessa.
+
+/* TO DO
+ * grafiikat (taustat, objektit)
+ * esteiden paikat / liikkuminen? 
+ * osuma reunaan/väärä suunta > siirrä B. alkuun
+ * "kyltit"  < perikato | koti >
+ * kotiinpääsy/maali
+ * pelin päättyminen?
+ *      G.O. uusi screen "wasted"
+ *      voitto uusi screen + grafiikat
+ * laskuri toimimaan -- aika ja ++/-- osumat
+ * nice-to-have: pensasasiat piilopullojen eteen
+ * nice-to-have: naapurit (vihu)
+ * nice-to-have: humalainen kävely
+ */
+
+
 /// <summary>
 /// Huppelihiippailu-peli
 /// </summary>
@@ -18,14 +30,11 @@ public class Huppelihiippailu : PhysicsGame
     PhysicsObject ukkeli;
 
     const double LIIKKUMISNOPEUS = 300;
-    const double RUUDUN_LEVEYS = 60;
-    const double RUUDUN_KORKEUS = 60;
+    const double RUUDUN_LEVEYS = 30;
+    const double RUUDUN_KORKEUS = 30;
 
-    // int krapulamittari = 5;
-
-    IntMeter krapulamittari;
-
-
+    DoubleMeter krapulamittari;
+    
     public override void Begin()
     {
         LuoKentta();
@@ -35,28 +44,40 @@ public class Huppelihiippailu : PhysicsGame
 
     public void LuoKrapulamittari()
     {
-        krapulamittari = new IntMeter(60);
+        krapulamittari = new DoubleMeter(7); // lähtöarvo
+        krapulamittari.MaxValue = 15;
+        krapulamittari.LowerLimit += KrapulaVoitti;
 
-        // krapulamittari laskemaan tasaisesti ajan kuluessa
 
-        Label pisteNaytto = new Label();
-        pisteNaytto.X = Screen.Left + 20;
-        pisteNaytto.Y = Screen.Top - 20;
-        pisteNaytto.TextColor = Color.Black;
-        pisteNaytto.Color = Color.White;
-        pisteNaytto.Title = "Hilpeystilanne";
+        Label otsikko = new Label("Hilpeysmittari");
+        otsikko.X = Screen.Left + 100;
+        otsikko.Y = Screen.Top - 120;
+        Add(otsikko);
 
-        pisteNaytto.BindTo(krapulamittari);
-        Add(pisteNaytto);
+        ProgressBar hilpeystaso = new ProgressBar(otsikko.Width, 20, krapulamittari);
+        hilpeystaso.X = otsikko.X;
+        hilpeystaso.Y = otsikko.Y - hilpeystaso.Height;
+        hilpeystaso.BorderColor = Color.Black;
+        hilpeystaso.BarColor = Color.Teal;
+        hilpeystaso.Color = Color.Silver;
+        hilpeystaso.BindTo(krapulamittari);
+        Add(hilpeystaso);
 
+
+
+    }
+
+    
+    public void KrapulaVoitti()
+    {
+         MessageDisplay.Add("O ou, taisi laskuhumala viedä voimat.");
     }
 
     public void LuoKentta()
     {
-        SetWindowSize(850, 550);
+        SetWindowSize(1550, 1050);
 
         TileMap kentta = TileMap.FromLevelAsset("kentta");
-        // kentta.SetTileMethod('X', LuoPolku);
         kentta.SetTileMethod('-', LuoNurmikko);
         kentta.SetTileMethod('o', LuoEste);
         kentta.SetTileMethod('s', LuoSnack);
@@ -69,14 +90,17 @@ public class Huppelihiippailu : PhysicsGame
         Level.CreateBorders();
         Level.BackgroundColor = Color.LightGray;
 
-        Camera.ZoomToLevel();
+        Camera.ZoomToAllObjects();
+        // Camera.StayInLevel = true;
+        // Camera.Zoom(2);
+        // Camera.Follow(ukkeli);
 
     }
 
-
+    
     public void LuoSnack(Vector paikka, double leveys, double korkeus)
     {
-        PhysicsObject snack = new PhysicsObject(10, 10);
+        PhysicsObject snack = new PhysicsObject(30, 30);
         snack.Position = paikka;
         snack.Shape = Shape.Diamond;
         snack.Color = Color.Orange;
@@ -87,14 +111,15 @@ public class Huppelihiippailu : PhysicsGame
 
     public void LuoEste(Vector paikka, double leveys, double korkeus)
     {
-        PhysicsObject este =  new PhysicsObject(10, 10);
+        PhysicsObject este =  new PhysicsObject(30, 30);
         este.Position = paikka;
         este.Shape = Shape.Hexagon;
         este.Color = Color.Navy;
         este.Tag = "este";
+        este.MakeStatic();
         Add(este);
     }
-
+    
 
     public void LuoNurmikko(Vector paikka, double leveys, double korkeus)
     {
@@ -122,7 +147,7 @@ public class Huppelihiippailu : PhysicsGame
         talo.Tag = "rakennus";
         Add(talo);
     }
-
+    
 
     /// <summary>
     /// Luodaan pelattava hahmo
@@ -143,24 +168,23 @@ public class Huppelihiippailu : PhysicsGame
         AddCollisionHandler(ukkeli, "este", PelaajaOsuuEsteeseen);
         AddCollisionHandler(ukkeli, "snack", PelaajaKeraaHerkun);
     }
-
+    
 
     public void PelaajaOsuuEsteeseen(PhysicsObject ukkeli, PhysicsObject kohde)
     {
-        krapulamittari.Value--;
+        MessageDisplay.Add("Osuit!");
+
+        krapulamittari.Value --;
         
-        if (krapulamittari <= 0)
-        {
-            MessageDisplay.Add("Hävisit pelin.");
-        }
-
     }
-
+    
     public void PelaajaKeraaHerkun(PhysicsObject ukkeli, PhysicsObject kohde)
     {
         krapulamittari.Value++;
         kohde.Destroy();
     }
+    
+
 
     /// <summary>
     /// Pelattavan hahmon ja yleiset ohjainkäskyt, pelistä poistuminen.
@@ -181,7 +205,7 @@ public class Huppelihiippailu : PhysicsGame
         Keyboard.Listen(Key.F1, ButtonState.Pressed, ShowControlHelp, "Näytä ohjeet");
     }
 
-
+    
     /// <summary>
     /// Pelattavan hahmon liikkuminen
     /// </summary>
@@ -191,4 +215,6 @@ public class Huppelihiippailu : PhysicsGame
     {
         ukkeli.Velocity = suunta;
     }
+
+
 }
