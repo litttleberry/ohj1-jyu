@@ -92,12 +92,14 @@ public class Huppelihiippailu : PhysicsGame
 
         TileMap kentta = TileMap.FromLevelAsset("kentta");
         kentta.SetTileMethod('-', LuoNurmikko);
-        kentta.SetTileMethod('o', LuoEste);
-        kentta.SetTileMethod('s', LuoSnack);
+        kentta.SetTileMethod('k', LuoEste, "kottari");
+        kentta.SetTileMethod('p', LuoEste, "paali");
+        kentta.SetTileMethod('s', LuoSnack, "puteli");
+        kentta.SetTileMethod('y', LuoSnack, "yopala");
         kentta.SetTileMethod('i', LuoUkkeli);
-        kentta.SetTileMethod('P', LuoTalo, Color.DarkBrown); // pubi eli lähtö
-        kentta.SetTileMethod('K', LuoTalo, Color.DarkRed); // koti eli maali
-        kentta.SetTileMethod('N', LuoTalo, Color.Charcoal); // naapuri
+        kentta.SetTileMethod('P', LuoTalo, "lähtö", "pubi"); // pubi eli lähtö
+        kentta.SetTileMethod('K', LuoTalo, "maali", "koti"); // koti eli maali
+        kentta.SetTileMethod('N', LuoTalo, "naapuri", "naapuri"); // naapuri
         kentta.SetTileMethod('x', LuoReunat);
         kentta.Optimize('-');
         kentta.Execute(RUUDUN_LEVEYS, RUUDUN_KORKEUS);
@@ -106,8 +108,8 @@ public class Huppelihiippailu : PhysicsGame
 
         Camera.ZoomToLevel();
         Camera.StayInLevel = true;
-      // Camera.Zoom(2.7);
-      // Camera.Follow(ukkeli);
+       // Camera.Zoom(2.7);
+       //  Camera.Follow(ukkeli);
     }
 
     
@@ -117,13 +119,12 @@ public class Huppelihiippailu : PhysicsGame
     /// <param name="paikka">Paikka</param>
     /// <param name="leveys">Leveys</param>
     /// <param name="korkeus">Korkeus</param>
-    public void LuoSnack(Vector paikka, double leveys, double korkeus)
+    public void LuoSnack(Vector paikka, double leveys, double korkeus, string kuvanNimi)
     {
-        PhysicsObject snack = new PhysicsObject(30, 30);
+        PhysicsObject snack = new PhysicsObject(leveys * 0.5, korkeus);
         snack.Position = paikka;
-        snack.Shape = Shape.Diamond;
-        snack.Color = Color.Orange;
         snack.Tag = "snack";
+        snack.Image = LoadImage(kuvanNimi);
         Add(snack);
     }
 
@@ -134,14 +135,13 @@ public class Huppelihiippailu : PhysicsGame
     /// <param name="paikka">Paikka</param>
     /// <param name="leveys">Leveys</param>
     /// <param name="korkeus">Korkeus</param>
-    public void LuoEste(Vector paikka, double leveys, double korkeus)
+    public void LuoEste(Vector paikka, double leveys, double korkeus, string kuvanNimi)
     {
-        PhysicsObject este =  new PhysicsObject(30, 30);
+        PhysicsObject este =  new PhysicsObject(leveys, korkeus * 0.8);
         este.Position = paikka;
-        este.Color = Color.Azure;
-        este.Shape = RandomGen.NextShape();
         este.Tag = "este";
         este.MakeStatic();
+        este.Image = LoadImage(kuvanNimi);
         Add(este);
     }
     
@@ -170,12 +170,13 @@ public class Huppelihiippailu : PhysicsGame
     /// <param name="leveys">Leveys</param>
     /// <param name="korkeus">Korkeus</param>
     /// <param name="vari">Väri</param>
-    public void LuoTalo(Vector paikka, double leveys, double korkeus, Color vari)
+    public void LuoTalo(Vector paikka, double leveys, double korkeus, string tag, string kuvanNimi)
     {
-        PhysicsObject talo = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        PhysicsObject talo = PhysicsObject.CreateStaticObject(leveys * 4, korkeus * 4);
         talo.Position = paikka;
+        talo.Tag = tag;
         talo.Shape = Shape.Rectangle;
-        talo.Color = vari;
+        talo.Image = LoadImage(kuvanNimi);
         talo.CollisionIgnoreGroup = 1;
         Add(talo);
     }
@@ -204,11 +205,11 @@ public class Huppelihiippailu : PhysicsGame
     /// <param name="korkeus">Hahmon korkeus</param>
     public void LuoUkkeli(Vector paikka, double leveys, double korkeus)
     {
-        ukkeli = new PhysicsObject(30.0, 30.0);
+        ukkeli = new PhysicsObject(leveys * 0.8, korkeus * 2);
         ukkeli.Position = paikka;
-        ukkeli.Shape = Shape.Circle;
-        ukkeli.Color = Color.BloodRed;
+        ukkeli.CanRotate = false;
         ukkeli.Tag = "ukkeli";
+        ukkeli.Image = LoadImage("ukkeli");
         Add(ukkeli);
 
         AsetaOhjaimet();
@@ -227,7 +228,7 @@ public class Huppelihiippailu : PhysicsGame
     {
         if (kohde.Tag.ToString() == "este")
         {
-            Label osuitEsteeseen = new Label("Hups, kompuroit!");
+            Label osuitEsteeseen = new Label("Hupsis, osuit!");
             osuitEsteeseen.Position = new Vector(Screen.Left + 120, Screen.Top - 180);
             osuitEsteeseen.Color = Color.DarkJungleGreen;
             osuitEsteeseen.TextColor = Color.Black;
@@ -259,6 +260,30 @@ public class Huppelihiippailu : PhysicsGame
             Add(osuitReunaan);
 
             Timer.SingleShot(5.0, AloitaAlusta);
+        }
+
+        if (kohde.Tag.ToString() == "lähtö")
+        {
+            Label lahto = new Label(RUUDUN_LEVEYS * 20, RUUDUN_KORKEUS * 5);
+            lahto.Position = new Vector(0, 0);
+            lahto.Color = Color.DarkJungleGreen;
+            lahto.TextColor = Color.Black;
+            lahto.BorderColor = Color.Silver;
+            lahto.Text = "Pubi on kiinni! Koti on toisessa suunnassa.";
+            lahto.LifetimeLeft = TimeSpan.FromSeconds(2); 
+            Add(lahto);
+        }
+
+        if (kohde.Tag.ToString() == "maali")
+        {
+            Label lahto = new Label(RUUDUN_LEVEYS * 20, RUUDUN_KORKEUS * 5);
+            lahto.Position = new Vector(0, 0);
+            lahto.Color = Color.DarkJungleGreen;
+            lahto.TextColor = Color.Black;
+            lahto.BorderColor = Color.Silver;
+            lahto.Text = "Kotona ollaan! Voitit pelin!";
+            lahto.LifetimeLeft = TimeSpan.FromSeconds(2);
+            Add(lahto);
         }
     }
 
