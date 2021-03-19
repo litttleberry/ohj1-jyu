@@ -9,13 +9,11 @@ using System.Collections.Generic;
 /* TO DO
  * grafiikat (taustat, objektit)
  * esteiden paikat / liikkuminen? 
- * osuma reunaan/väärä suunta > miten Balkuun, ei koko kenttää alusta?
  * "kyltit"  < perikato | koti >
  * kotiinpääsy/maali
  * pelin päättyminen?
  *      G.O. uusi screen "wasted", KrapulaVoitti-aliohjelma
  *      voitto uusi screen + grafiikat, SelvisitMaaliin-aliohjelma
- * laskuri toimimaan -- aika ja ++/-- osumat
  * nice-to-have: pensasasiat piilopullojen eteen
  * nice-to-have: naapurit (vihu)
  * nice-to-have: humalainen kävely
@@ -23,7 +21,7 @@ using System.Collections.Generic;
  */
 
 /// @author saelmarj
-/// @version 4.3.2021
+/// @version 19.3.2021
 /// <summary>
 /// Huppelihiippailu-peli
 /// </summary>
@@ -35,25 +33,68 @@ public class Huppelihiippailu : PhysicsGame
     const double RUUDUN_LEVEYS = 30;
     const double RUUDUN_KORKEUS = 30;
 
-    DoubleMeter krapulamittari;
+    IntMeter krapulamittari;
     
     /// <summary>
     /// Peli aloitus tää vissiin on tää Begin?
     /// </summary>
     public override void Begin()
     {
+        SetWindowSize(1450, 900/*, true*/);
+
+        IsMouseVisible = true;
+        Level.Background.Image = 
+            Image.FromGradient(1450, 900,
+            new Color(0, 102, 51),
+            new Color(0, 153, 76));
+        MultiSelectWindow alkuvalikko = new MultiSelectWindow("Huppelihiippailun alkuvalikko", "Aloita peli", "Parhaat pisteet", "Lopeta");
+        Add(alkuvalikko);
+        alkuvalikko.AddItemHandler(0, AloitaAlusta);
+        alkuvalikko.AddItemHandler(1, ParhaatPisteet);
+        alkuvalikko.AddItemHandler(2, Exit);
+        alkuvalikko.DefaultCancel = 2;
+        
+        Label alkuinfo = new Label();
+        alkuinfo.Position = new Vector(0, alkuvalikko.Top + 120);
+        alkuinfo.Color = Color.Transparent;
+        alkuinfo.TextColor = new Color(184, 220, 202);
+        alkuinfo.Text = 
+            "Hupsis! Napsun pubi-ilta ystävien \n" +
+            "kanssa venähti pikkutunneille, ja \n" +
+            "nyt on aika suunnata kotiin. \n" +
+            "Onneksi on leppeä kesäyö ja \n" +
+            "kotimatkaa jouduttavat \n" +
+            "menomatkalla piilotetut herkut. \n" +
+            "Vie Napsu kotiin ennen kuin \n" +
+            "krapula iskee!";
+        Add(alkuinfo);
+    }
+
+
+    /// <summary>
+    /// Tyhjentää pelin ja alustaa sen alkamaan alusta.
+    /// </summary>
+    public void AloitaAlusta()
+    {
+        ClearAll();
+        IsMouseVisible = false;
         LuoKentta();
         LuoKrapulamittari();
     }
 
+
+    public void ParhaatPisteet()
+    {
+        // tänne sit pojohommelit
+    }
 
     /// <summary>
     /// Luodaan pisteitä JA JOS ONNISTUN NIIN AIKAA mittaava laskuri.
     /// </summary>
     public void LuoKrapulamittari()
     {
-        krapulamittari = new DoubleMeter(5); // mittarin lähtöarvo
-        krapulamittari.MaxValue = 10;
+        krapulamittari = new IntMeter(15); // mittarin lähtöarvo
+        krapulamittari.MaxValue = 15;
         krapulamittari.LowerLimit += KrapulaVoitti;
 
 
@@ -70,8 +111,24 @@ public class Huppelihiippailu : PhysicsGame
         hilpeystaso.Color = Color.Silver;
         hilpeystaso.BindTo(krapulamittari);
         Add(hilpeystaso);
+
+        PeliajanLaskenta();
     }
 
+
+    public void PeliajanLaskenta()
+    {
+        // kokonaispeliaika, lopullisesti esim joku 2 min?
+        Timer peliaika = new Timer();
+        peliaika.Interval = 15;         // tähän se aika sekunteina, tsekkaa aikapistevähennys.start
+        peliaika.Timeout += KrapulaVoitti;
+        peliaika.Start(1);
+    
+        Timer aikapistevahennys = new Timer();
+        aikapistevahennys.Interval = 3;      // 3 sekuntia aikaa
+        aikapistevahennys.Timeout += delegate { krapulamittari.Value--; };
+        aikapistevahennys.Start(5);  // aloitusten lkm, tsekkaa peliaika.interval ja aikapistevahennys.interval
+    }
     
     /// <summary>
     /// TÄSTÄ PITÄIS SAADA TEHTYÄ SELLANEN GAME OVER -ALIOHJELMA.
@@ -109,7 +166,7 @@ public class Huppelihiippailu : PhysicsGame
         Camera.ZoomToLevel();
         Camera.StayInLevel = true;
        // Camera.Zoom(2.7);
-       //  Camera.Follow(ukkeli);
+       // Camera.Follow(ukkeli);
     }
 
     
@@ -175,7 +232,7 @@ public class Huppelihiippailu : PhysicsGame
         PhysicsObject talo = PhysicsObject.CreateStaticObject(leveys * 4, korkeus * 4);
         talo.Position = paikka;
         talo.Tag = tag;
-        talo.Shape = Shape.Rectangle;
+        talo.Shape = Shape.Diamond;
         talo.Image = LoadImage(kuvanNimi);
         talo.CollisionIgnoreGroup = 1;
         Add(talo);
@@ -230,7 +287,7 @@ public class Huppelihiippailu : PhysicsGame
         {
             Label osuitEsteeseen = new Label("Hupsis, osuit!");
             osuitEsteeseen.Position = new Vector(Screen.Left + 120, Screen.Top - 180);
-            osuitEsteeseen.Color = Color.DarkJungleGreen;
+            osuitEsteeseen.Color = Color.Transparent;
             osuitEsteeseen.TextColor = Color.Black;
             osuitEsteeseen.LifetimeLeft = TimeSpan.FromSeconds(0.8);
             Add(osuitEsteeseen);
@@ -251,52 +308,32 @@ public class Huppelihiippailu : PhysicsGame
         {
             ukkeli.Stop();  // ei toimi??
 
-            Label osuitReunaan = new Label(RUUDUN_LEVEYS * 20, RUUDUN_KORKEUS * 5);
-            osuitReunaan.Position = new Vector(0, 0);
-            osuitReunaan.Color = Color.DarkJungleGreen;
-            osuitReunaan.TextColor = Color.Black;
-            osuitReunaan.BorderColor = Color.Silver;
-            osuitReunaan.Text = "Hups! Taisit eksyä. Peli alkaa alusta tuokion kuluttua.";
-            Add(osuitReunaan);
-
+            TekstikenttaKeskelleRuutua("Hups! Taisit eksyä. Peli alkaa alusta tuokion kuluttua.", 5.0);
             Timer.SingleShot(5.0, AloitaAlusta);
         }
 
         if (kohde.Tag.ToString() == "lähtö")
         {
-            Label lahto = new Label(RUUDUN_LEVEYS * 20, RUUDUN_KORKEUS * 5);
-            lahto.Position = new Vector(0, 0);
-            lahto.Color = Color.DarkJungleGreen;
-            lahto.TextColor = Color.Black;
-            lahto.BorderColor = Color.Silver;
-            lahto.Text = "Pubi on kiinni! Koti on toisessa suunnassa.";
-            lahto.LifetimeLeft = TimeSpan.FromSeconds(2); 
-            Add(lahto);
+            TekstikenttaKeskelleRuutua("Taverna on kiinni! Koti on toisessa suunnassa.", 2.0);
         }
 
         if (kohde.Tag.ToString() == "maali")
         {
-            Label lahto = new Label(RUUDUN_LEVEYS * 20, RUUDUN_KORKEUS * 5);
-            lahto.Position = new Vector(0, 0);
-            lahto.Color = Color.DarkJungleGreen;
-            lahto.TextColor = Color.Black;
-            lahto.BorderColor = Color.Silver;
-            lahto.Text = "Kotona ollaan! Voitit pelin!";
-            lahto.LifetimeLeft = TimeSpan.FromSeconds(2);
-            Add(lahto);
+            TekstikenttaKeskelleRuutua("Hienosti! Voitit pelin!", 4.5);
         }
     }
 
-
-    /// <summary>
-    /// Tyhjentää pelin ja alustaa sen alkamaan alusta.
-    /// EI TOSIN TOIMI NIINKUIN OIS KIVA, zoom pielessä?
-    /// </summary>
-    public void AloitaAlusta()
+    public void TekstikenttaKeskelleRuutua(string sisalto, double nakyvyysaika)
     {
-        ClearAll();
-        LuoKentta();
-        LuoKrapulamittari();
+        Label infoteksti = new Label(RUUDUN_LEVEYS * 20, RUUDUN_KORKEUS * 5);
+        infoteksti.Position = new Vector(0, 0);
+        infoteksti.Color = Color.DarkJungleGreen;
+        infoteksti.TextColor = Color.Black;
+        infoteksti.BorderColor = Color.Silver;
+        infoteksti.Text = sisalto;
+        infoteksti.LifetimeLeft = TimeSpan.FromSeconds(nakyvyysaika);
+        Add(infoteksti);
+        
     }
 
 
