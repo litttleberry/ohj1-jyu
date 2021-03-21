@@ -8,6 +8,7 @@ using System.Collections.Generic;
 
 /* TO DO
  * grafiikat (taustat, objektit)
+ *      naapureille erilaisia mökkejä? lista/taulukko
  * esteiden paikat / liikkuminen? 
  * "kyltit"  < perikato | koti >
  * kotiinpääsy/maali
@@ -48,6 +49,8 @@ public class Huppelihiippailu : PhysicsGame
             new Color(0, 102, 51),
             new Color(0, 153, 76));
         MultiSelectWindow alkuvalikko = new MultiSelectWindow("Huppelihiippailun alkuvalikko", "Aloita peli", "Parhaat pisteet", "Lopeta");
+        alkuvalikko.X = -160;
+        alkuvalikko.Y = 0;
         Add(alkuvalikko);
         alkuvalikko.AddItemHandler(0, AloitaAlusta);
         alkuvalikko.AddItemHandler(1, ParhaatPisteet);
@@ -55,7 +58,7 @@ public class Huppelihiippailu : PhysicsGame
         alkuvalikko.DefaultCancel = 2;
         
         Label alkuinfo = new Label();
-        alkuinfo.Position = new Vector(0, alkuvalikko.Top + 120);
+        alkuinfo.Position = new Vector(alkuvalikko.Right + 200, 0);
         alkuinfo.Color = Color.Transparent;
         alkuinfo.TextColor = new Color(184, 220, 202);
         alkuinfo.Text = 
@@ -63,7 +66,7 @@ public class Huppelihiippailu : PhysicsGame
             "kanssa venähti pikkutunneille, ja \n" +
             "nyt on aika suunnata kotiin. \n" +
             "Onneksi on leppeä kesäyö ja \n" +
-            "kotimatkaa jouduttavat \n" +
+            "kotimatkalla mieltä ilahduttavat \n" +
             "menomatkalla piilotetut herkut. \n" +
             "Vie Napsu kotiin ennen kuin \n" +
             "krapula iskee!";
@@ -156,7 +159,7 @@ public class Huppelihiippailu : PhysicsGame
         kentta.SetTileMethod('i', LuoUkkeli);
         kentta.SetTileMethod('P', LuoTalo, "lähtö", "pubi"); // pubi eli lähtö
         kentta.SetTileMethod('K', LuoTalo, "maali", "koti"); // koti eli maali
-        kentta.SetTileMethod('N', LuoTalo, "naapuri", "naapuri"); // naapuri
+        kentta.SetTileMethod('N', LuoTalo, "naapuri", "naapurikivi"); // naapuri
         kentta.SetTileMethod('x', LuoReunat);
         kentta.Optimize('-');
         kentta.Execute(RUUDUN_LEVEYS, RUUDUN_KORKEUS);
@@ -165,8 +168,8 @@ public class Huppelihiippailu : PhysicsGame
 
         Camera.ZoomToLevel();
         Camera.StayInLevel = true;
-       // Camera.Zoom(2.7);
-       // Camera.Follow(ukkeli);
+        //Camera.Zoom(2.7);
+        //Camera.Follow(ukkeli);
     }
 
     
@@ -229,7 +232,9 @@ public class Huppelihiippailu : PhysicsGame
     /// <param name="vari">Väri</param>
     public void LuoTalo(Vector paikka, double leveys, double korkeus, string tag, string kuvanNimi)
     {
-        PhysicsObject talo = PhysicsObject.CreateStaticObject(leveys * 4, korkeus * 4);
+       // Image[] talot = { LoadImage("pubi"), LoadImage("koti"), LoadImage("naapuriKanto"), LoadImage("naapuriKivi"), LoadImage("naapuriThatch") };
+
+        PhysicsObject talo = PhysicsObject.CreateStaticObject(leveys * 2, korkeus * 2);
         talo.Position = paikka;
         talo.Tag = tag;
         talo.Shape = Shape.Diamond;
