@@ -33,20 +33,24 @@ using System.Collections.Generic;
 /// </summary>
 public class Huppelihiippailu : PhysicsGame
 {
-    PhysicsObject ukkeli;
+    PlatformCharacter ukkeli;
 
     const double LIIKKUMISNOPEUS = 300;
     const double RUUDUN_LEVEYS = 30;
     const double RUUDUN_KORKEUS = 30;
 
     IntMeter krapulamittari;
-    
+
+    static readonly Image taustakuva = LoadImage("nurmi");
+  
+
     /// <summary>
     /// Alkuvalikko, ohjeteksti ja aliohjelmakutsu pelin aloittamiseksi.
     /// </summary>
     public override void Begin()
     {
-        SetWindowSize(1450, 900/*, true*/);
+     //   SetWindowSize(1450, 900/*, true*/);
+     
 
         //    IsMouseVisible = true;
         //    Level.Background.Image = 
@@ -155,10 +159,19 @@ public class Huppelihiippailu : PhysicsGame
     /// </summary>
     void LuoKentta()
     {
-        SetWindowSize(1450, 900/*, true*/);
+        // SetWindowSize(1450, 900/*, true*/);
+        
+        
+        Level.Height = 1500;
+        Level.Width = 2200;
+
+        Level.Background.Image = taustakuva;
+        Level.Background.TileToLevel();
+
 
         TileMap kentta = TileMap.FromLevelAsset("kentta");
-        kentta.SetTileMethod('-', LuoNurmikko, "nurmikko");
+        //  kentta.SetTileMethod('-', LuoNurmikko, "nurmikko");
+        kentta.SetTileMethod('-', LuoPolku, "polku2");
         kentta.SetTileMethod('k', LuoEste, "kottari");
         kentta.SetTileMethod('p', LuoEste, "paali");
         kentta.SetTileMethod('s', LuoSnack, "puteli");
@@ -168,15 +181,16 @@ public class Huppelihiippailu : PhysicsGame
         kentta.SetTileMethod('K', LuoTalo, "maali"); // koti eli maali
         kentta.SetTileMethod('N', LuoTalo, "naapuri"); // naapuri
         kentta.SetTileMethod('x', LuoReunat);
-        kentta.Optimize('-');
+    //    kentta.Optimize('-');
         kentta.Execute(RUUDUN_LEVEYS, RUUDUN_KORKEUS);
 
-        Level.Background.Color = Color.LightGray;
 
-     //   Camera.ZoomToLevel();
-     //   Camera.StayInLevel = true;
-        Camera.Zoom(2.7);
-        Camera.Follow(ukkeli);
+        // Level.Background.Color = Color.LightGray;
+
+        Camera.ZoomToLevel();
+        Camera.StayInLevel = true; 
+    //  Camera.Zoom(2.7);
+    //  Camera.Follow(ukkeli);
 
 
 
@@ -191,7 +205,7 @@ public class Huppelihiippailu : PhysicsGame
         double varoetaisyys = Vector.Distance(oikeaYlakulma, vasenAlakulma);
 
         Timer vihujenLisaaminen = new Timer();
-        vihujenLisaaminen.Interval = RandomGen.NextDouble(1.0, 3.0);
+        vihujenLisaaminen.Interval = RandomGen.NextDouble(8, 15.0);
         vihujenLisaaminen.Timeout += delegate { LisaaVihu(varoetaisyys); };
         vihujenLisaaminen.Start();
     }
@@ -253,7 +267,26 @@ public class Huppelihiippailu : PhysicsGame
         este.Image = LoadImage(kuvanNimi);
         Add(este);
     }
-    
+
+
+
+    /// <summary>
+    /// Luodaan kentän taustana toimiva nurmialue
+    /// </summary>
+    /// <param name="paikka">Paikka</param>
+    /// <param name="leveys">Leveys</param>
+    /// <param name="korkeus">Korkeus</param>
+    void LuoPolku(Vector paikka, double leveys, double korkeus, string kuvanNimi)
+    {
+        PhysicsObject polku = PhysicsObject.CreateStaticObject(leveys, korkeus);
+        polku.Position = paikka;
+        polku.Shape = Shape.Rectangle;
+        polku.Color = Color.DarkJungleGreen;
+        polku.Image = LoadImage(kuvanNimi);
+        polku.CollisionIgnoreGroup = 1;
+        Add(polku);
+    }
+
 
     /// <summary>
     /// Luodaan kentän taustana toimiva nurmialue
@@ -319,7 +352,7 @@ public class Huppelihiippailu : PhysicsGame
     /// <param name="korkeus">Hahmon korkeus</param>
     void LuoUkkeli(Vector paikka, double leveys, double korkeus)
     {
-        ukkeli = new PhysicsObject(leveys, korkeus);
+        ukkeli = new PlatformCharacter(leveys * 0.9, korkeus);
         ukkeli.Position = paikka;
         ukkeli.CanRotate = false;
         ukkeli.Tag = "ukkeli";
@@ -402,9 +435,9 @@ public class Huppelihiippailu : PhysicsGame
         Keyboard.Listen(Key.Down, ButtonState.Down, Liikuta, "Liikuta Napsua alaspäin", ukkeli, new Vector(0, -LIIKKUMISNOPEUS));
         Keyboard.Listen(Key.Down, ButtonState.Released, Liikuta, null, ukkeli, Vector.Zero);
 
-        Keyboard.Listen(Key.Left, ButtonState.Down, LiikutaJaKaanna, "Liikuta Napsua vasemmalle", ukkeli, new Vector(-LIIKKUMISNOPEUS, 0));
+        Keyboard.Listen(Key.Left, ButtonState.Down, LiikutaJaKaanna, "Liikuta Napsua vasemmalle", ukkeli, -LIIKKUMISNOPEUS);
         Keyboard.Listen(Key.Left, ButtonState.Released, Liikuta, null, ukkeli, Vector.Zero);
-        Keyboard.Listen(Key.Right, ButtonState.Down, LiikutaJaKaanna, "Liikuta Napsua oikealle", ukkeli, new Vector(LIIKKUMISNOPEUS, 0));
+        Keyboard.Listen(Key.Right, ButtonState.Down, LiikutaJaKaanna, "Liikuta Napsua oikealle", ukkeli, LIIKKUMISNOPEUS);
         Keyboard.Listen(Key.Right, ButtonState.Released, Liikuta, null, ukkeli, Vector.Zero);
 
         Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
@@ -417,7 +450,7 @@ public class Huppelihiippailu : PhysicsGame
     /// </summary>
     /// <param name="ukkeli">Pelihahmo</param>
     /// <param name="suunta">Liikkeen suunta (ylös, alas, suoraan sivulle)</param>
-    void Liikuta(PhysicsObject ukkeli, Vector suunta)
+    void Liikuta(PlatformCharacter ukkeli, Vector suunta)
     {
         ukkeli.Velocity = suunta;
     }
@@ -428,9 +461,12 @@ public class Huppelihiippailu : PhysicsGame
     /// </summary>
     /// <param name="ukkeli">Pelihahmo</param>
     /// <param name="suunta">???</param>
-    void LiikutaJaKaanna(PhysicsObject ukkeli, Vector suunta)
+    void LiikutaJaKaanna(PlatformCharacter ukkeli, double suunta)
     {
-        ukkeli.Velocity = suunta;
+       // ukkeli.Velocity = suunta;
+        //Animation.ukkeliVasen = Animation.Mirror(ukkeli);
+       // ukkeli.MirrorImage();
+        ukkeli.Walk(suunta);
     }
 
 }
