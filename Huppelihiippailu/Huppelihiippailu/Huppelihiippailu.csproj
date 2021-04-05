@@ -43,7 +43,7 @@
       <None Update="Content\napsu.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="Content\napsuo.png">
+      <None Update="Content\napsu.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
       <None Update="Content\napsuv.png">
