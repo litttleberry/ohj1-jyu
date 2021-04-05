@@ -8,11 +8,8 @@ using System.Collections.Generic;
 
 /* TO DO
  * grafiikat (taustat, objektit)
- *      nurmikko kuva per ruutu eikä venytettynä?
- *      polku tekstuuri?
- * ukkelin kääntyminen
- *      ukkeli.MirrorImage() tai erilliset kuvat, mut miten ja mihin kohtaan?
- *      jos animaatio, saako olla attribuuttina?
+ *      nurmikko ja polku vain väreinä
+ * vihujen kääntyminen
  *      vihujen kuvat mirror? taulukon alkioiden mirrorointi?
  * "kyltit"  < perikato | koti >
  * pelin päättyminen?
@@ -27,7 +24,7 @@ using System.Collections.Generic;
  */
 
 /// @author saelmarj
-/// @version 19.3.2021
+/// @version 5.4.2021
 /// <summary>
 /// Huppelihiippailu-peli
 /// </summary>
@@ -40,9 +37,6 @@ public class Huppelihiippailu : PhysicsGame
     const double RUUDUN_KORKEUS = 30;
 
     IntMeter krapulamittari;
-
-    static readonly Image taustakuva = LoadImage("nurmi");
-  
 
     /// <summary>
     /// Alkuvalikko, ohjeteksti ja aliohjelmakutsu pelin aloittamiseksi.
@@ -91,7 +85,7 @@ public class Huppelihiippailu : PhysicsGame
     void AloitaAlusta()
     {
         ClearAll();
-        IsMouseVisible = false;
+        IsMouseVisible = true;
         LuoKentta();
         LuoKrapulamittari();
     }
@@ -149,7 +143,9 @@ public class Huppelihiippailu : PhysicsGame
     /// </summary>
     void KrapulaVoitti()
     {
-         MessageDisplay.Add("O ou, taisi laskuhumala viedä voimat. \n Peli päättyi!");
+         
+        
+        MessageDisplay.Add("O ou, taisi laskuhumala viedä voimat. \n Peli päättyi!");
     }
 
 
@@ -159,19 +155,19 @@ public class Huppelihiippailu : PhysicsGame
     /// </summary>
     void LuoKentta()
     {
-        // SetWindowSize(1450, 900/*, true*/);
+        SetWindowSize(1450, 900/*, true*/);
         
         
-        Level.Height = 1500;
-        Level.Width = 2200;
+      //  Level.Height = 1500;
+      //  Level.Width = 2200;
 
-        Level.Background.Image = taustakuva;
-        Level.Background.TileToLevel();
+    //   Level.Background.Image = taustakuva;
+    //   Level.Background.TileToLevel();
 
 
         TileMap kentta = TileMap.FromLevelAsset("kentta");
-        //  kentta.SetTileMethod('-', LuoNurmikko, "nurmikko");
-        kentta.SetTileMethod('-', LuoPolku, "polku2");
+        kentta.SetTileMethod('-', LuoNurmikko, "nurmi");
+   //     kentta.SetTileMethod('-', LuoPolku, "polku2");
         kentta.SetTileMethod('k', LuoEste, "kottari");
         kentta.SetTileMethod('p', LuoEste, "paali");
         kentta.SetTileMethod('s', LuoSnack, "puteli");
@@ -185,7 +181,7 @@ public class Huppelihiippailu : PhysicsGame
         kentta.Execute(RUUDUN_LEVEYS, RUUDUN_KORKEUS);
 
 
-        // Level.Background.Color = Color.LightGray;
+        Level.Background.Color = Color.LightGray;
 
         Camera.ZoomToLevel();
         Camera.StayInLevel = true; 
@@ -194,11 +190,12 @@ public class Huppelihiippailu : PhysicsGame
 
 
 
-
         double ylakulmaX = ukkeli.Position.X + 2 * RUUDUN_LEVEYS;
         double ylakulmaY = ukkeli.Position.Y + 2 * RUUDUN_KORKEUS;
         double alakulmaX = ukkeli.Position.X - 2 * RUUDUN_LEVEYS;
         double alakulmaY = ukkeli.Position.Y - 2 * RUUDUN_KORKEUS;
+
+        double girdle = Varoetaisyys(ylakulmaX, ylakulmaY, alakulmaX, alakulmaY);
 
         Vector oikeaYlakulma = new Vector(ylakulmaX, ylakulmaY);
         Vector vasenAlakulma = new Vector(alakulmaX, alakulmaY);
@@ -210,6 +207,10 @@ public class Huppelihiippailu : PhysicsGame
         vihujenLisaaminen.Start();
     }
 
+    double Varoetaisyys(double ylakulmaX, double ylakulmaY, double alakulmaX, double alakulmaY)
+    {
+        return 0.0;
+    }
 
     void LisaaVihu(double varoetaisyys)
     {
@@ -283,7 +284,7 @@ public class Huppelihiippailu : PhysicsGame
         polku.Shape = Shape.Rectangle;
         polku.Color = Color.DarkJungleGreen;
         polku.Image = LoadImage(kuvanNimi);
-        polku.CollisionIgnoreGroup = 1;
+    //    polku.CollisionIgnoreGroup = 1;
         Add(polku);
     }
 
@@ -300,7 +301,7 @@ public class Huppelihiippailu : PhysicsGame
         nurmikko.Position = paikka;
         nurmikko.Shape = Shape.Rectangle;
         nurmikko.Color = Color.DarkJungleGreen;
-        nurmikko.Image = LoadImage(kuvanNimi);
+    //    nurmikko.Image = LoadImage(kuvanNimi);
         nurmikko.CollisionIgnoreGroup = 1;
         Add(nurmikko);
     }
