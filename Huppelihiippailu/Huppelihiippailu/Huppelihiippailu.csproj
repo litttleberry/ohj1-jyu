@@ -28,16 +28,16 @@
       <None Update="Content\naapuri2.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="Content\naapurikanto.png">
+      <None Update="Content\naapuri1.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="Content\naapurikivi.png">
+      <None Update="Content\naapuri2.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="Content\naapuriruusut.png">
+      <None Update="Content\naapuri3.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="Content\naapurithatch.png">
+      <None Update="Content\naapuri4.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
       <None Update="Content\napsu.png">

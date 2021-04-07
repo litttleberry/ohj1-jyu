@@ -4,6 +4,7 @@ using Jypeli.Controls;
 using Jypeli.Widgets;
 using System;
 using System.Collections.Generic;
+using Jypeli.Effects;
 
 
 /* TO DO
@@ -21,6 +22,11 @@ using System.Collections.Generic;
  *      mikä rooli? miten "tapellaan"? miten niistä pääsee eroon?
  *      ilmestyminen (esim kamera-alueen ylänurkasta eikä täysin randomisti)
  * nice-to-have: humalainen kävely
+ * TARKISTA
+ *      LuoReunat
+ *      snack kuvat
+ *      este kuvat
+ *      naapuritalojen kuvat taulukkoon ja silmukkaan?
  */
 
 /// @author saelmarj
@@ -37,60 +43,75 @@ public class Huppelihiippailu : PhysicsGame
 
     IntMeter krapulamittari;
     EasyHighScore pojomestarit = new EasyHighScore();
+    double vahennetytSekuntit;
 
+    List<PhysicsObject> yopalat = new List<PhysicsObject>();
 
 
 
     /// <summary>
-    /// Alkuvalikko, ohjeteksti ja aliohjelmakutsu pelin aloittamiseksi.
+    /// Alkuvalikko aliohjelmakutsu pelin aloittamiseksi.
     /// </summary>
     public override void Begin()
     {
-      //  SetWindowSize(1450, 900/*, true*/);
-     
-
-        //    IsMouseVisible = true;
-        //    Level.Background.Image = 
-        //        Image.FromGradient(1450, 900,
-        //        new Color(0, 102, 51),
-        //        new Color(0, 153, 76));
-        //    MultiSelectWindow alkuvalikko = new MultiSelectWindow("Huppelihiippailun alkuvalikko", "Aloita peli", "Parhaat pisteet", "Lopeta");
-        //    alkuvalikko.X = -160;
-        //    alkuvalikko.Y = 0;
-        //    Add(alkuvalikko);
-        //    alkuvalikko.AddItemHandler(0, AloitaAlusta);
-        //    alkuvalikko.AddItemHandler(1, ParhaatPisteet);
-        //    alkuvalikko.AddItemHandler(2, Exit);
-        //    alkuvalikko.DefaultCancel = 2;
-        //    
-        //    Label alkuinfo = new Label();
-        //    alkuinfo.Position = new Vector(alkuvalikko.Right + 200, 0);
-        //    alkuinfo.Color = Color.Transparent;
-        //    alkuinfo.TextColor = new Color(184, 220, 202);
-        //    alkuinfo.Text = 
-        //        "Hupsis! Napsun pubi-ilta ystävien \n" +
-        //        "kanssa venähti pikkutunneille, ja \n" +
-        //        "nyt on aika suunnata kotiin. \n" +
-        //        "Onneksi on leppeä kesäyö ja \n" +
-        //        "kotimatkalla mieltä ilahduttavat \n" +
-        //        "menomatkalla piilotetut herkut. \n" +
-        //        "Vie Napsu kotiin ennen kuin \n" +
-        //        "krapula iskee!";
-        //    Add(alkuinfo);
+        //        SetWindowSize(1450, 900/*, true*/);
+        //        Level.Background.Image =
+        //            Image.FromGradient(1450, 900,
+        //            new Color(0, 102, 51),
+        //            new Color(0, 153, 76));
 
         AloitaAlusta();
+        //    IsPaused = true;
+        //
+        //    MultiSelectWindow alkuvalikko = new MultiSelectWindow("Huppelihiippailu", "Aloita uusi peli", "Näytä ohjeet", "Lopeta");
+        //    alkuvalikko.Position = new Vector(0, 0);
+        //    alkuvalikko.AddItemHandler(0, AloitaAlusta);
+        //    alkuvalikko.AddItemHandler(1, NaytaOhjevalikko);
+        //    alkuvalikko.AddItemHandler(2, ConfirmExit);
+        //    alkuvalikko.DefaultCancel = 2;
+        //    Add(alkuvalikko);
     }
 
 
     /// <summary>
     /// Tyhjentää pelin ja alustaa sen alkamaan alusta.
+    /// Kentän ja pistelaskurin luominen.
     /// </summary>
     void AloitaAlusta()
     {
-        ClearAll();
         IsMouseVisible = true;
+        ClearAll();
+        yopalat.Clear();
         LuoKentta();
         LuoKrapulamittari();
+    }
+
+
+    /// <summary>
+    ///  Pelin ohjeet, johon pääsee alkuvalikosta tai keskeyttämällä pelin.
+    ///  Paluu takaisin peliin, aloitus uudelleen, poistuminen pelistä.
+    /// </summary>
+    void NaytaOhjevalikko()
+    {
+        IsPaused = true;
+        MultiSelectWindow ohjeet = new MultiSelectWindow
+            ("Hupsis! Napsun pubi-ilta ystävien \n" +
+               "kanssa venähti pikkutunneille, ja \n" +
+               "nyt on aika suunnata kotiin. \n" +
+               "Onneksi on leppeä kesäyö ja \n" +
+               "kotimatkalla mieltä ilahduttavat \n" +
+               "menomatkalla piilotetut herkut. \n" +
+               "Kerää herkut, varo naapureita ja \n" +
+               "vie Napsu kotiin ennen kuin aika \n" +
+               "loppuu ja krapula iskee! Liikuta \n" +
+               "Napsua nuolinäppäimillä, pidä \n" +
+               "tauko painamalla välilyöntiä. \n",
+               "Jatka peliä", "Uusi peli", "Lopeta");
+        ohjeet.Position = new Vector(0, 0);
+        ohjeet.AddItemHandler(0, delegate () { ohjeet.DefaultCancel = 0; });  // MIKÄ VIKA?? EI JATKA HETI PELIÄ, VAAN PITÄÄ PAINAA ESC UUDESTAAN PELISSÄ??
+        ohjeet.AddItemHandler(1, AloitaAlusta);
+        ohjeet.AddItemHandler(2, ConfirmExit);
+        Add(ohjeet);
     }
 
 
@@ -101,8 +122,14 @@ public class Huppelihiippailu : PhysicsGame
     {
         krapulamittari = new IntMeter(15); // mittarin lähtöarvo
         krapulamittari.MaxValue = 15;
-        krapulamittari.LowerLimit += KrapulaVoitti;
-
+        krapulamittari.LowerLimit += delegate ()
+        {
+            KrapulaVoitti(4.5,
+                "Voi rähmä! Liikaa kompurointia ja \n" +
+                "liian vähän yöpaloja - Napsu ei \n" +
+                "selvinnyt kotiin. Peli alkaa hetken \n" +
+                "kuluttua alusta. Onnea matkaan!");
+        };
         Label otsikko = new Label("Hilpeysmittari");
         otsikko.X = Screen.Left + 120;
         otsikko.Y = Screen.Top - 120;
@@ -121,28 +148,56 @@ public class Huppelihiippailu : PhysicsGame
     }
 
 
+    /// <summary>
+    /// Luodaan aikalaskuri. Vaikutus pistelaskuriin negatiivinen.
+    /// </summary>
     void PeliajanLaskenta()
     {
         // kokonaispeliaika, lopullisesti esim joku 2 min?
         Timer peliaika = new Timer();
         peliaika.Interval = 15;         // tähän se aika sekunteina, tsekkaa aikapistevähennys.start
-        peliaika.Timeout += KrapulaVoitti;
+        peliaika.Timeout += delegate ()
+        {
+            KrapulaVoitti(4.5,
+                "Voi rähmä! Aika loppui ja lasku- \n" +
+                "humala uuvutti Napsun. Peli alkaa \n" +
+                "hetken kuluttua alusta. Onnea matkaan!");
+        };
         peliaika.Start(1);
-    
+
         Timer aikapistevahennys = new Timer();
-        aikapistevahennys.Interval = 3;      // 3 sekuntia aikaa
+        aikapistevahennys.Interval = 3;      // 3 sekuntia aikaa, eli kaiketi 3 sek välein putoaa 1 yksikkö
         aikapistevahennys.Timeout += delegate { krapulamittari.Value--; };
-        aikapistevahennys.Start();  
+        aikapistevahennys.Start();
+
+        vahennetytSekuntit = MontakoKertaaAikapistevahennysTimerKaynnistyy(peliaika.Interval, aikapistevahennys.Interval);
     }
-    
+
+
     /// <summary>
-    /// TÄSTÄ PITÄIS SAADA TEHTYÄ SELLANEN GAME OVER -ALIOHJELMA.
+    /// Funktio laskee, kuinka monta sekuntia eli yksikköä krapulamittarista
+    /// vähenee pelin aikana. Käytetään lopullisten pisteiden määrittämisessä.
     /// </summary>
-    void KrapulaVoitti()
+    /// <param name="kokoPelinKestoSek">Pelin kokonaiskesto sekunteina.</param>
+    /// <param name="ajanVaikutusPistelaskuriin">Montako sekuntia kunkin pisteyksikkövähennyksen välillä kuluu.</param>
+    /// <returns>Liukuluku, joka kertoo kuinka monta kertaa ajastin käynnistyy, eli
+    ///     kuinka monta pisteyksikköä krapulamittarista vähenee.</returns>
+    double MontakoKertaaAikapistevahennysTimerKaynnistyy(double kokoPelinKestoSek, double ajanVaikutusPistelaskuriin)
     {
-         
-        
-        MessageDisplay.Add("O ou, taisi laskuhumala viedä voimat. \n Peli päättyi!");
+        return kokoPelinKestoSek / ajanVaikutusPistelaskuriin;
+    }
+
+
+    /// <summary>
+    /// Game over -aliohjelma. Tulostaa näytölle ilmoituksen jonka sisältö riippuu pelin
+    /// päättymisen syystä (aika loppu tai kokonaispisteet nollassa) ja käynnistää pelin uudestaan.
+    /// </summary>
+    /// <param name="viiveAloitukseen">Ajastimen viive; aika jonka teksti näkyy ruudulla.</param>
+    /// <param name="gameoverTeksti">Ilmoitus, joka näytetään pelaajalle.</param>
+    void KrapulaVoitti(double viiveAloitukseen, string gameoverTeksti)
+    {
+        TekstikenttaKeskelleRuutua(gameoverTeksti, viiveAloitukseen);
+        Timer.SingleShot(viiveAloitukseen, AloitaAlusta);
     }
 
 
@@ -152,26 +207,23 @@ public class Huppelihiippailu : PhysicsGame
     /// </summary>
     void LuoKentta()
     {
-//        SetWindowSize(1450, 900/*, true*/);
+        //        SetWindowSize(1450, 900/*, true*/);
 
-       // Level.Height = 1500;
-       // Level.Width = 3600;
-       // Level.CreateBorders(0.0, true);
+        // Level.Height = 1500;
+        // Level.Width = 3600;
+        // Level.CreateBorders(0.0, true);
 
         Level.Background.Color = Color.FromHexCode("86592d");
-               
+
         TileMap kentta = TileMap.FromLevelAsset("kentta");
-        kentta.SetTileMethod('-', LuoNurmikko, "nurmi");
+        kentta.SetTileMethod('-', LuoNurmikko);
         kentta.SetTileMethod('x', LuoReunat);
-        kentta.SetTileMethod('s', LuoSnack, "puteli");
-        kentta.SetTileMethod('y', LuoSnack, "yopala");
-        kentta.SetTileMethod('k', LuoEste, "kottari");
-        kentta.SetTileMethod('p', LuoEste, "paali");
+        kentta.SetTileMethod('s', LuoSnack, "puteli", yopalat);
+        kentta.SetTileMethod('e', LuoEste, "paali");
         kentta.SetTileMethod('P', LuoTalo, "lähtö"); // pubi eli lähtö
         kentta.SetTileMethod('K', LuoTalo, "maali"); // koti eli maali
         kentta.SetTileMethod('N', LuoTalo, "naapuri"); // naapuri
         kentta.SetTileMethod('i', LuoUkkeli);
-        kentta.SetTileMethod('v', LuoVihu);
         kentta.Optimize('-');
         kentta.Execute(RUUDUN_KOKO, RUUDUN_KOKO);
 
@@ -180,24 +232,23 @@ public class Huppelihiippailu : PhysicsGame
         Camera.StayInLevel = true;
         //  Camera.Zoom(2.7);
         //  Camera.Follow(ukkeli);
+    }
 
-        // VIHUT LAITETTU KENTTÄÄN
-     //   LuoVihu();
 
-     //   // SIIRRETTY LUOVIHU-ALIOHJELMAAN
-     //   // luodaan suojavyöhyke ukkelin ympärille; vihut luodaan girdlen ulkopuolelle
-     //   double ylakulmaX = ukkeli.Position.X + 4 * RUUDUN_KOKO;
-     //   double ylakulmaY = ukkeli.Position.Y + 4 * RUUDUN_KOKO;
-     //   double alakulmaX = ukkeli.Position.X - 4 * RUUDUN_KOKO;
-     //   double alakulmaY = ukkeli.Position.Y - 4 * RUUDUN_KOKO;
-     //
-     //   double girdle = Varoetaisyys(ylakulmaX, ylakulmaY, alakulmaX, alakulmaY);
-//   //     double maksimi = Maksimietaisyys(ukkeli.Position.X, ukkeli.Position.Y);
-     //  
-     //   Timer vihujenLisaaminen = new Timer();
-     //   vihujenLisaaminen.Interval = RandomGen.NextDouble(2, 3);
-     //   vihujenLisaaminen.Timeout += delegate { LuoVihu(girdle/*, maksimi*/); };
-     //   vihujenLisaaminen.Start();
+    /// <summary>
+    /// Luodaan kentän olioden perusrunko. Kutsutaan kentän luomisen aliohjelmista.
+    /// </summary>
+    /// <param name="paikka">Olion sijainti kentällä.</param>
+    /// <param name="leveys">Olion leveys (ruudun koko).</param>
+    /// <param name="korkeus">Olion korkeus (ruudun koko).</param>
+    /// <param name="muoto">Olion muoto.</param>
+    /// <returns>Fysiikkaolio.</returns>
+    PhysicsObject LuoOlio(Vector paikka, double leveys, double korkeus, Shape muoto)
+    {
+        PhysicsObject olio = new PhysicsObject(leveys, korkeus);
+        olio.Position = paikka;
+        olio.Shape = muoto;
+        return olio;
     }
 
 
@@ -207,13 +258,11 @@ public class Huppelihiippailu : PhysicsGame
     /// <param name="paikka">Paikka</param>
     /// <param name="leveys">Leveys</param>
     /// <param name="korkeus">Korkeus</param>
-    void LuoNurmikko(Vector paikka, double leveys, double korkeus, string kuvanNimi)
+    void LuoNurmikko(Vector paikka, double leveys, double korkeus)
     {
-        PhysicsObject nurmikko = PhysicsObject.CreateStaticObject(leveys, korkeus);
-        nurmikko.Position = paikka;
-        nurmikko.Shape = Shape.Rectangle;
+        PhysicsObject nurmikko = LuoOlio(paikka, leveys, korkeus, Shape.Rectangle);
         nurmikko.Color = Color.FromHexCode("006600");
-        //    nurmikko.Image = LoadImage(kuvanNimi);
+        nurmikko.MakeStatic();
         nurmikko.CollisionIgnoreGroup = 1;
         Add(nurmikko);
     }
@@ -240,12 +289,13 @@ public class Huppelihiippailu : PhysicsGame
     /// <param name="paikka">Paikka</param>
     /// <param name="leveys">Leveys</param>
     /// <param name="korkeus">Korkeus</param>
-    void LuoSnack(Vector paikka, double leveys, double korkeus, string kuvanNimi)
+    /// 
+    void LuoSnack(Vector paikka, double leveys, double korkeus, string kuvanNimi, List<PhysicsObject> yopalat)
     {
-        PhysicsObject snack = new PhysicsObject(leveys * 0.5, korkeus);
-        snack.Position = paikka;
+        PhysicsObject snack = LuoOlio(paikka, leveys * 0.5, korkeus, Shape.Circle);
         snack.Tag = "snack";
         snack.Image = LoadImage(kuvanNimi);
+        yopalat.Add(snack);
         Add(snack);
     }
 
@@ -258,10 +308,9 @@ public class Huppelihiippailu : PhysicsGame
     /// <param name="korkeus">Korkeus</param>
     void LuoEste(Vector paikka, double leveys, double korkeus, string kuvanNimi)
     {
-        PhysicsObject este = new PhysicsObject(leveys, korkeus * 0.8);
-        este.Position = paikka;
-        este.Tag = "este";
+        PhysicsObject este = LuoOlio(paikka, leveys, korkeus * 0.8, Shape.Circle);
         este.MakeStatic();
+        este.Tag = "este";
         este.Image = LoadImage(kuvanNimi);
         Add(este);
     }
@@ -276,15 +325,14 @@ public class Huppelihiippailu : PhysicsGame
     /// <param name="tag">Rakennustyypit toisistaan erottava tag</param>
     void LuoTalo(Vector paikka, double leveys, double korkeus, string tag)
     {
-        Image[] talot = { LoadImage("pubi"), LoadImage("koti"), LoadImage("naapurikanto"), LoadImage("naapurikivi"), LoadImage("naapurithatch"), LoadImage("naapuriruusut") };
+        Image[] talot = { LoadImage("naapuri1"), LoadImage("naapuri2"), LoadImage("naapuri3"), LoadImage("naapuri4") };
 
-        PhysicsObject talo = PhysicsObject.CreateStaticObject(leveys * 4, korkeus * 4);
-        talo.Position = paikka;
+        PhysicsObject talo = LuoOlio(paikka, leveys * 4, korkeus * 4, Shape.Diamond);
         talo.Tag = tag;
-        talo.Shape = Shape.Diamond;
-        if (talo.Tag.ToString() == "lähtö") talo.Image = talot[0];
-        if (talo.Tag.ToString() == "maali") talo.Image = talot[1];
-        if (talo.Tag.ToString() == "naapuri") talo.Image = RandomGen.SelectOne<Image>(talot[2], talot[3], talot[4], talot[5]);
+        talo.MakeStatic();
+        if (talo.Tag.ToString() == "lähtö") talo.Image = LoadImage("pubi");
+        if (talo.Tag.ToString() == "maali") talo.Image = LoadImage("koti");
+        if (talo.Tag.ToString() == "naapuri") talo.Image = RandomGen.SelectOne<Image>(talot[2], talot[3], talot[1], talot[0]);
         talo.CollisionIgnoreGroup = 1;
         Add(talo, 1);
     }
@@ -325,6 +373,7 @@ public class Huppelihiippailu : PhysicsGame
         Keyboard.Listen(Key.Right, ButtonState.Down, LiikutaJaKaanna, "Liikuta Napsua oikealle", ukkeli, LIIKKUMISNOPEUS);
         Keyboard.Listen(Key.Right, ButtonState.Released, Liikuta, null, ukkeli, Vector.Zero);
 
+        Keyboard.Listen(Key.Space, ButtonState.Pressed, NaytaOhjevalikko, "Pidä tauko");
         Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
         Keyboard.Listen(Key.F1, ButtonState.Pressed, ShowControlHelp, "Näytä ohjeet");
     }
@@ -360,18 +409,6 @@ public class Huppelihiippailu : PhysicsGame
     /// <param name="kohde"> Kohde, johon törmättiin </param>
     void PelaajaTormasi(PlatformCharacter ukkeli, PhysicsObject kohde)
     {
-        //   double vihuosumat = 0;
-        //   double esteosumat = 0;
-        //   double snackosumat = 0;
-
-      //  List<PhysicsObject> osututEsteet = new List<PhysicsObject>();
-      //  List<PhysicsObject> keratytSnackit = new List<PhysicsObject>();
-      //  List<PhysicsObject> osututVihut = new List<PhysicsObject>();
-        List<double> esteLkm = new List<double>();
-        List<double> vihuLkm = new List<double>();
-        List<int> snackLkm = new List<int>();
-
-
         if (kohde.Tag.ToString() == "este")
         {
             Label osuitEsteeseen = new Label("Hupsis, osuit!");
@@ -382,23 +419,19 @@ public class Huppelihiippailu : PhysicsGame
             Add(osuitEsteeseen);
 
             krapulamittari.Value--;
-            esteLkm.Add(1.0);
-                        
-          //  osututEsteet.Add(kohde);
-//            esteLkm.Add(1.0);
         }
 
         if (kohde.Tag.ToString() == "snack")
         {
             krapulamittari.Value++;
+            yopalat.RemoveAt(0);
+            MessageDisplay.Add("listalla nyt " + yopalat.Count + " lukua");
             kohde.Destroy();
-            snackLkm.Add(1);
         }
 
         if (kohde.Tag.ToString() == "vihu")
         {
             krapulamittari.Value--;
-            vihuLkm.Add(1.0);
             kohde.Destroy();
         }
 
@@ -417,46 +450,61 @@ public class Huppelihiippailu : PhysicsGame
 
         if (kohde.Tag.ToString() == "maali")
         {
-            int keratytLkm = Pistetilastot1(snackLkm);
-            double miinuspojot = Pistetilastot2(esteLkm, vihuLkm);
-            TekstikenttaKeskelleRuutua("Hienosti! Voitit pelin! \n Keräsit " + keratytLkm + " yöllistä herkkupalaa ja \n voimasi hupenivat " + miinuspojot + " iskun johdosta.", 4.5);
-            pojomestarit.EnterAndShow(krapulamittari.Value);
+            IsPaused = true;
+
+            Level.AmbientLight = -1.0;
+            Light valo = new Light();
+            valo.Intensity = 1.0;
+            valo.Distance = 150;
+            valo.Position = ukkeli.Position;
+            Add(valo);
+
+
+            // ukkeli.Destroy();  // tähän tilalle joku jehu animaatio? tai fanfaariäänitiedosto?
+            string maaliFiilikset = KerattiinkoKaikki(yopalat);
+            TekstikenttaKeskelleRuutua(maaliFiilikset, 4.5);
+
+            Loppupisteet(20);
+
+
+            //    int keratytLkm = Pistetilastot1(snackLkm);
+            //    double miinuspojot = Pistetilastot2(esteLkm, vihuLkm);
+            //    TekstikenttaKeskelleRuutua("Hienosti! Voitit pelin! \n Keräsit " + keratytLkm + " yöllistä herkkupalaa ja \n voimasi hupenivat " + miinuspojot + " iskun johdosta.", 4.5);
+            //    pojomestarit.EnterAndShow(krapulamittari.Value);
         }
 
         //   Pistetilastot(snackosumat, esteosumat, vihuosumat);
     }
 
-    int Pistetilastot1(List<int> snackit)
+
+    /// <summary>
+    /// Funktio tarkistaa, kerättiinkö pelin aikana kaikki snackit.
+    /// </summary>
+    /// <param name="yopalalista">Lista, jolta snackit poistetaan sitä mukaan kuin niitä kerätään.</param>
+    /// <returns>Merkkijono, jonka sisältö riippuu kerättyjen yöpalojen lukumäärästä.</returns>
+    static string KerattiinkoKaikki(List<PhysicsObject> yopalalista)
     {
-        int summa = 0;
-        for (int i = 0; i < snackit.Count; i++)
-        {
-            summa = summa + snackit[i];
-        }
-
-
-        if (summa == 19) krapulamittari.Value += 10; // HIHAVAKIO VAI MIKÄ SE OLI; SNÄKKIEN MÄÄRÄ KARTALLA
-
-        return summa;
+        string maalissa;
+        if (yopalalista.Count == 0) maalissa = "Huippujuttu, löysit kaikki yöpalat! \n Napsu sai vahvan alun päiväänsä ja \n sinä sait XXX lisäpistettä!";
+        else maalissa = "Kotiin selvitty, hyvä!";
+        return maalissa;
     }
 
-   // static double Pistetilastot (double snackosumat, double esteosumat, double vihuosumat)
-    
-    double Pistetilastot2(List<double> esteet, List<double> vihut)
+
+    /// <summary>
+    /// Funktio laskee pisteet käyttäjälle. Parametrin lisäksi hyödynnetään 
+    /// krapulamittarin lukemaa ja pistelaskurista vähennettyjä sekunteja.
+    /// </summary>
+    /// <param name="snackitAlussa">Yöpalojen lukumäärä pelin alussa (kentta.txt -tiedoston 's' merkkien lkm). </param>
+    /// <returns>Pelaajan lopullinen pistemäärä double-lukuna.</returns>
+    double Loppupisteet(double snackitAlussa)
     {
-        double summa = 0;
-        for (int i = 0; i < esteet.Count; i++)
-        {
-            summa += esteet[i];
-        }
-
-        for (int i = 0; i < vihut.Count; i++)
-        {
-            summa += vihut[i];
-        }
-
-        return summa;
+        double keratytSnackit = snackitAlussa - yopalat.Count;
+        double peruspisteet = krapulamittari.Value + vahennetytSekuntit + keratytSnackit;
+        if (yopalat.Count != 0) return peruspisteet;
+        return peruspisteet + snackitAlussa / 2;
     }
+
 
     /// <summary>
     /// Luodaan tekstikenttä keskelle kuvaruutua viestien näyttämiseksi lyhytaikaisesti.
@@ -492,179 +540,4 @@ public class Huppelihiippailu : PhysicsGame
         double varoetaisyys = Vector.Distance(oikeaYlakulma, vasenAlakulma);
         return varoetaisyys;
     }
-
-
-    //  LUOVIHUT LISTAAN TAI TAULUKKOON
-    //https://trac.cc.jyu.fi/projects/npo/wiki/DataStorage
-    //
-    //
-    //
-
-    void LuoVihu(Vector paikka, double leveys, double korkeus)
-    {
-        List<PhysicsObject> vihut = new List<PhysicsObject>();
-                
-        PhysicsObject vihu = new PhysicsObject(leveys, korkeus);
-        vihu.Position = paikka;
-        vihu.CanRotate = false;
-        vihu.Tag = "vihu";
-        vihu.IsVisible = false;
-
-        // vihujen kuvat
-        Image[] vihuliinit = { LoadImage("vihu1"), LoadImage("vihu2") };
-        vihu.Image = RandomGen.SelectOne<Image>(vihuliinit[0], vihuliinit[1]);
-
-
-        PhysicsObject aiemminLahinVihu = EtsiLahin(vihut, ukkeli.Position);
-
-        FollowerBrain aivot = new FollowerBrain(ukkeli);
-        aivot.DistanceFar = 8 * RUUDUN_KOKO; // missä aletaan seurata (sama ku maksimi, poistetaanko maksimi?)
-        aivot.DistanceClose = RUUDUN_KOKO * 2;
-        aivot.Speed = 50;
-        aivot.TargetClose += delegate ()
-        {
-            vihu.IsVisible = true;
-        };
-        vihu.Brain = aivot;
-        
-        Add(vihu);
-        vihut.Add(vihu);
-
-    }
-
-
-    PhysicsObject EtsiLahin(List<PhysicsObject> vihut, Vector ukkelinSijainti)
-    {
-        if (vihut.Count == 0) return null;
-        PhysicsObject lahinVihu = vihut[0]; // lähtöoletus että ekassa alkiossa ois lähin vihuli
-        foreach (PhysicsObject vihu in vihut)
-        {
-            if (Vector.Distance(vihu.Position, ukkelinSijainti) < Vector.Distance(lahinVihu.Position, ukkelinSijainti)) lahinVihu = vihu;
-        }
-        return lahinVihu;
-    }
-
-    PhysicsObject KorostaLahin(List<PhysicsObject> vihut, PlatformCharacter ukkeli, PhysicsObject aiemminLahinVihu)
-    {
-        if (vihut.Count == 0) return null;
-        if (aiemminLahinVihu != null) aiemminLahinVihu.Size = new Vector(RUUDUN_KOKO, RUUDUN_KOKO);
-
-        PhysicsObject nytLahin = EtsiLahin(vihut, ukkeli.Position);
-        if (nytLahin != null) nytLahin.Size = new Vector(2 * RUUDUN_KOKO, 2 * RUUDUN_KOKO);
-        return nytLahin;
-    }
-
-    /*
-     * LUOVIHU-ALIOHJELMA JOS VIHUT LUODAAN RANDOMISTI
-        /// <summary>
-        /// Luodaan pelikentälle naapureita eli vihollisia satunnaisiin paikkoihin.
-        /// </summary>
-        /// <param name="varoetaisyys">Suojavyöhyke pelaajan ympärillä, jolle vihollisia ei luoda.</param>
-        void LuoVihu() // double varoetaisyys)
-        {
-
-            // luodaan suojavyöhyke ukkelin ympärille; vihut luodaan girdlen ulkopuolelle
-            double ylakulmaX = ukkeli.Position.X + 4 * RUUDUN_KOKO;
-            double ylakulmaY = ukkeli.Position.Y + 4 * RUUDUN_KOKO;
-            double alakulmaX = ukkeli.Position.X - 4 * RUUDUN_KOKO;
-            double alakulmaY = ukkeli.Position.Y - 4 * RUUDUN_KOKO;
-
-            double girdle = Varoetaisyys(ylakulmaX, ylakulmaY, alakulmaX, alakulmaY);
-            //        double maksimi = Maksimietaisyys(ukkeli.Position.X, ukkeli.Position.Y);
-
-
-            // vihujen listan alustus ja vihujen lisääminen listaan aliohjelmassa
-            List<PhysicsObject> vihut = new List<PhysicsObject>();
-    //        LisaaVihu(vihut, ukkeli.Position, girdle);
-
-    //      PhysicsObject lahinVihu = EtsiLahin(vihut, ukkeli);
-                PhysicsObject lahinVihu = KorostaLahin(vihut, ukkeli, null);
-
-            // vihujen lisääminen kentälle ajastimella
-            Timer vihujenLisaaminen = new Timer();
-            vihujenLisaaminen.Interval = RandomGen.NextDouble(2, 3);
-            vihujenLisaaminen.Timeout += delegate 
-            {
-                //LuoVihu(girdle) //, maksimi); 
-                LisaaVihu(vihut, ukkeli.Position, girdle);
-                lahinVihu = KorostaLahin(vihut, ukkeli, lahinVihu);
-            };
-            vihujenLisaaminen.Start();
-
-
-
-
-
-        //    Timer vihujenpoistoajastin = new Timer();
-        //    vihujenpoistoajastin.Interval = 9.0;
-        //    vihujenpoistoajastin.Timeout += delegate ()
-        //    {
-        //        PoistaVihu(vihut);
-        //        lahinVihu = KorostaLahin(vihut, ukkeli, lahinVihu);
-        //
-        //    };
-        //    vihujenpoistoajastin.Start();
-
-
-        }
-
-        void LisaaVihu(List<PhysicsObject> vihut, Vector ukkelinSijainti, double varoetaisyys)
-        {
-            // vihujen kuvat
-            Image[] vihuliinit = { LoadImage("vihu1"), LoadImage("vihu2") };
-
-            double enimmaisetaisyys = 8 * RUUDUN_KOKO;
-
-            // vihun luonti ja perusasioiden määrittäminen
-            PhysicsObject vihu = new PhysicsObject(RUUDUN_KOKO, RUUDUN_KOKO, Shape.Circle);
-            vihu.CanRotate = false;
-            vihu.Image = RandomGen.SelectOne<Image>(vihuliinit[0], vihuliinit[1]);
-            vihu.Tag = "vihu";
-            Vector vihunSijainti;
-            do
-            {
-                vihunSijainti = RandomGen.NextVector(Level.BoundingRect); //(ukkeli.Position.X, enimmaisetaisyys);
-            }
-            while (Vector.Distance(vihunSijainti, ukkeli.Position) > varoetaisyys);
-            vihu.Position = vihunSijainti;
-            Add(vihu);
-            vihut.Add(vihu);
-
-            FollowerBrain aivot = new FollowerBrain(ukkeli);
-            aivot.DistanceFar = 8 * RUUDUN_KOKO; // missä aletaan seurata (sama ku maksimi, poistetaanko maksimi?)
-            aivot.DistanceClose = RUUDUN_KOKO;
-            aivot.Speed = 50;
-            vihu.Brain = aivot;
-        }
-
-        void PoistaVihu(List<PhysicsObject> vihut)
-        {
-            if (vihut.Count == 0) return;
-            vihut[0].Destroy();
-            vihut.RemoveAt(0);
-        }
-        PhysicsObject EtsiLahin(List<PhysicsObject> vihut, Vector ukkelinSijainti)
-        {
-            if (vihut.Count == 0) return null;
-            PhysicsObject lahinVihu = vihut[0];
-            foreach (PhysicsObject vihu in vihut)
-            {
-                if (Vector.Distance(vihu.Position, ukkelinSijainti) < Vector.Distance(lahinVihu.Position, ukkelinSijainti)) lahinVihu = vihu;
-            }
-            return lahinVihu;
-        }
-
-
-        PhysicsObject KorostaLahin(List<PhysicsObject> vihut, PlatformCharacter ukkeli, PhysicsObject aiemminLahinVihu)
-        {
-            if (vihut.Count == 0) return null;
-            if (aiemminLahinVihu != null) aiemminLahinVihu.Image = LoadImage("paali");
-            PhysicsObject nytLahin = EtsiLahin(vihut, ukkeli.Position);
-            if (nytLahin != null) nytLahin.Image = LoadImage("naapuriruusut");
-            nytLahin.Height = 2 * RUUDUN_KOKO;
-            nytLahin.Width = 2 * RUUDUN_KOKO;
-            return nytLahin;
-        }
-
-     */
 }
