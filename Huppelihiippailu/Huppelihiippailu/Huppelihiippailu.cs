@@ -72,7 +72,19 @@ public class Huppelihiippailu : PhysicsGame
         AloitaAlusta();
         IsPaused = true;
 
-        MultiSelectWindow alkuvalikko = new("Huppelihiippailu", "Aloita uusi peli", "Näytä ohjeet", "Lopeta");
+        MultiSelectWindow alkuvalikko = new
+            ("Huppelihiippailu \n \n" +
+            "Hupsis! Napsun pubi-ilta ystävien \n" +
+               "kanssa venähti pikkutunneille, ja \n" +
+               "nyt on aika suunnata kotiin. \n" +
+               "Onneksi on leppeä kesäyö ja \n" +
+               "kotimatkalla mieltä ilahduttavat \n" +
+               "menomatkalla piilotetut herkut. \n" +
+               "Kerää herkut, varo naapureita ja \n" +
+               "tiellä lojuvia esteitä ja vie Napsu \n" +
+               "kotiin ennen kuin aika loppuu ja \n" +
+               "krapula iskee. Onnea peliin!",
+               "Aloita uusi peli", "Näytä ohjeet", "Lopeta");
         alkuvalikko.Position = new Vector(0, 0);
         alkuvalikko.AddItemHandler(0, delegate () { 
             IsPaused = false;
@@ -106,17 +118,11 @@ public class Huppelihiippailu : PhysicsGame
     {
         IsPaused = true;
         MultiSelectWindow ohjeet = new
-            ("Hupsis! Napsun pubi-ilta ystävien \n" +
-               "kanssa venähti pikkutunneille, ja \n" +
-               "nyt on aika suunnata kotiin. \n" +
-               "Onneksi on leppeä kesäyö ja \n" +
-               "kotimatkalla mieltä ilahduttavat \n" +
-               "menomatkalla piilotetut herkut. \n" +
-               "Kerää herkut, varo naapureita ja \n" +
-               "vie Napsu kotiin ennen kuin aika \n" +
-               "loppuu ja krapula iskee! Liikuta \n" +
-               "Napsua nuolinäppäimillä, pidä \n" +
-               "tauko painamalla välilyöntiä. \n",
+            ("Liikuta Napsua nuolinäppäimillä, \n" +
+            "pidä tauko painamalla välilyöntiä, \n" +
+            "lopeta peli painamalla Esc. Näppäin- \n" +
+            "komennot saat esiin pelin aikana \n" +
+            "painamalla F1.",
                "Jatka peliä", "Uusi peli", "Lopeta");
         ohjeet.Position = new Vector(0, 0);
         ohjeet.AddItemHandler(0, delegate () { 
