@@ -17,51 +17,51 @@ public class Huppelihiippailu : PhysicsGame
     /// <summary>
     /// Pelattava hahmo.
     /// </summary>
-    PlatformCharacter ukkeli;
+    private PlatformCharacter ukkeli;
 
 
     /// <summary>
     /// Pelihahmon liikkumisnopeus.
     /// </summary>
-    const double LIIKKUMISNOPEUS = 200;
-    
+    private const double LIIKKUMISNOPEUS = 200;
+
 
     /// <summary>
     /// Pelikentän ruudun koko. Kenttä tekstitiedostosta.
     /// </summary>
-    const double RUUDUN_KOKO = 30;
-    
-    
+    private const double RUUDUN_KOKO = 30;
+
+
     /// <summary>
     /// Pelin kesto sekunteina, ja krapulamittarin maksimiarvo.
     /// </summary>
-    const double PELIN_KESTO = 60;
+    private const double PELIN_KESTO = 60;
 
 
     /// <summary>
     /// Yöpalojen määrä pelin alussa, eli
     /// 's'-merkkien määrä kentta.txt-tiedostossa.
     /// </summary>
-    const double SNACKIT_ALUSSA = 20;
+    private const double SNACKIT_ALUSSA = 20;
 
-    
+
     /// <summary>
     /// Pistelaskuri.
     /// </summary>
-    DoubleMeter krapulamittari;
-    
+    private DoubleMeter krapulamittari;
+
 
     /// <summary>
     /// Yöllisten herkkupalojen lista.
     /// </summary>
-    List<PhysicsObject> yopalat = new();
+    private List<PhysicsObject> yopalat = new();
 
 
     /// <summary>
     /// Lista, joka kerää tietoa peliajan kulumisesta.
     /// Käytetään loppupisteiden laskennassa.
     /// </summary>
-    List<double> loppupisteetAjasta = new();
+    private List<double> loppupisteetAjasta = new();
 
 
     /// <summary>
@@ -105,8 +105,8 @@ public class Huppelihiippailu : PhysicsGame
         yopalat.Clear();
         LuoKentta();
         LuoKrapulamittari();
-        MediaPlayer.Play("taustamusa");
-        MediaPlayer.IsRepeating = true;
+        // MediaPlayer.Play("taustamusa");
+        // MediaPlayer.IsRepeating = true;
     }
 
 
@@ -201,7 +201,7 @@ public class Huppelihiippailu : PhysicsGame
     /// </summary>
     /// <param name="viiveAloitukseen">Ajastimen viive; aika jonka teksti näkyy ruudulla.</param>
     /// <param name="gameoverTeksti">Ilmoitus, joka näytetään pelaajalle.</param>
-    public void KrapulaVoitti(double viiveAloitukseen, string gameoverTeksti)
+    private void KrapulaVoitti(double viiveAloitukseen, string gameoverTeksti)
     {
         TekstikenttaKeskelleRuutua(gameoverTeksti, viiveAloitukseen);
         Timer.SingleShot(viiveAloitukseen, AloitaAlusta);
